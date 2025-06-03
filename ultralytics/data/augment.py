@@ -644,7 +644,7 @@ class Mosaic(BaseMixTransform):
             padw, padh = c[:2]
             x1, y1, x2, y2 = (max(x, 0) for x in c)  # allocate coordinates
 
-            img3[y1:y2, x1:x2] = img[y1 - padh :, x1 - padw :]  # img3[ymin:ymax, xmin:xmax]
+            img3[y1:y2, x1:x2] = img[y1 - padh:, x1 - padw:]  # img3[ymin:ymax, xmin:xmax]
             # hp, wp = h, w  # height, width previous for next iteration
 
             # Labels assuming imgsz*2 mosaic size
@@ -652,7 +652,7 @@ class Mosaic(BaseMixTransform):
             mosaic_labels.append(labels_patch)
         final_labels = self._cat_labels(mosaic_labels)
 
-        final_labels["img"] = img3[-self.border[0] : self.border[0], -self.border[1] : self.border[1]]
+        final_labels["img"] = img3[-self.border[0]: self.border[0], -self.border[1]: self.border[1]]
         return final_labels
 
     def _mosaic4(self, labels):
@@ -774,7 +774,7 @@ class Mosaic(BaseMixTransform):
             x1, y1, x2, y2 = (max(x, 0) for x in c)  # allocate coordinates
 
             # Image
-            img9[y1:y2, x1:x2] = img[y1 - padh :, x1 - padw :]  # img9[ymin:ymax, xmin:xmax]
+            img9[y1:y2, x1:x2] = img[y1 - padh:, x1 - padw:]  # img9[ymin:ymax, xmin:xmax]
             hp, wp = h, w  # height, width previous for next iteration
 
             # Labels assuming imgsz*2 mosaic size
@@ -782,7 +782,7 @@ class Mosaic(BaseMixTransform):
             mosaic_labels.append(labels_patch)
         final_labels = self._cat_labels(mosaic_labels)
 
-        final_labels["img"] = img9[-self.border[0] : self.border[0], -self.border[1] : self.border[1]]
+        final_labels["img"] = img9[-self.border[0]: self.border[0], -self.border[1]: self.border[1]]
         return final_labels
 
     @staticmethod
@@ -849,11 +849,11 @@ class Mosaic(BaseMixTransform):
             instances.append(labels["instances"])
         # Final labels
         final_labels = {
-            "im_file": mosaic_labels[0]["im_file"],
-            "ori_shape": mosaic_labels[0]["ori_shape"],
+            "im_file"      : mosaic_labels[0]["im_file"],
+            "ori_shape"    : mosaic_labels[0]["ori_shape"],
             "resized_shape": (imgsz, imgsz),
-            "cls": np.concatenate(cls, 0),
-            "instances": Instances.concatenate(instances, axis=0),
+            "cls"          : np.concatenate(cls, 0),
+            "instances"    : Instances.concatenate(instances, axis=0),
             "mosaic_border": self.border,
         }
         final_labels["instances"].clip(imgsz, imgsz)
@@ -1847,6 +1847,13 @@ class Albumentations:
 
             # Transforms
             T = [
+                A.Blur(p=0.01),
+                A.MedianBlur(p=0.01),
+                A.ToGray(p=0.01),
+                A.CLAHE(p=0.01),
+                A.RandomBrightnessContrast(p=0.0),
+                A.RandomGamma(p=0.0),
+                A.ImageCompression(quality_range=(75, 100), p=0.0),
                 A.RandomResizedCrop(size=(imgsz, imgsz), scale=(0.1, 1.0), ratio=(3 / 4, 4 / 3), p=1.0),
             ]
 
@@ -2178,7 +2185,7 @@ class Albumentations:
             # Now bbox, masks and keypoints are corresponding at the instance level
             final_segments, final_bboxes, final_bboxes_cls, final_keypoints = [], [], [], []
             for mask, box, box_cls, keypoint, keypoint_cls in zip(
-                masks, bboxes, bbox_classes, keypoints, keypoints_classes
+                    masks, bboxes, bbox_classes, keypoints, keypoints_classes
             ):
                 # No target area
                 if np.all(mask == 0):
@@ -2962,7 +2969,7 @@ class ClassifyLetterBox:
 
         # Create padded image
         im_out = np.full((hs, ws, 3), 114, dtype=im.dtype)
-        im_out[top : top + h, left : left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+        im_out[top: top + h, left: left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
         return im_out
 
 
@@ -3038,7 +3045,7 @@ class CenterCrop:
         imh, imw = im.shape[:2]
         m = min(imh, imw)  # min dimension
         top, left = (imh - m) // 2, (imw - m) // 2
-        return cv2.resize(im[top : top + m, left : left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
+        return cv2.resize(im[top: top + m, left: left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
 
 
 # NOTE: keep this class for backward compatibility
