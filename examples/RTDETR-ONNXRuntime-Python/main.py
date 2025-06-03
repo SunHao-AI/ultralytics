@@ -1,28 +1,62 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import argparse
+from typing import List
 
 import cv2
 import numpy as np
 import onnxruntime as ort
 import torch
 
-from ultralytics.utils import ASSETS, yaml_load
+from ultralytics.utils import ASSETS, YAML
 from ultralytics.utils.checks import check_requirements, check_yaml
 
 
 class RTDETR:
-    """RTDETR object detection model class for handling inference and visualization."""
+    """
+    RT-DETR (Real-Time Detection Transformer) object detection model for ONNX inference and visualization.
 
-    def __init__(self, model_path, img_path, conf_thres=0.5, iou_thres=0.5):
+    This class implements the RT-DETR model for object detection tasks, supporting ONNX model inference and
+    visualization of detection results with bounding boxes and class labels.
+
+    Attributes:
+        model_path (str): Path to the ONNX model file.
+        img_path (str): Path to the input image.
+        conf_thres (float): Confidence threshold for filtering detections.
+        iou_thres (float): IoU threshold for non-maximum suppression.
+        session (ort.InferenceSession): ONNX runtime inference session.
+        model_input (list): Model input metadata.
+        input_width (int): Width dimension required by the model.
+        input_height (int): Height dimension required by the model.
+        classes (List[str]): List of class names from COCO dataset.
+        color_palette (np.ndarray): Random color palette for visualization.
+        img (np.ndarray): Loaded input image.
+        img_height (int): Height of the input image.
+        img_width (int): Width of the input image.
+
+    Methods:
+        draw_detections: Draw bounding boxes and labels on the input image.
+        preprocess: Preprocess the input image for model inference.
+        bbox_cxcywh_to_xyxy: Convert bounding boxes from center format to corner format.
+        postprocess: Postprocess model output to extract and visualize detections.
+        main: Execute the complete object detection pipeline.
+
+    Examples:
+        Initialize RT-DETR detector and run inference
+        >>> detector = RTDETR("rtdetr-l.onnx", "image.jpg", conf_thres=0.5)
+        >>> output_image = detector.main()
+        >>> cv2.imshow("Detections", output_image)
+    """
+
+    def __init__(self, model_path: str, img_path: str, conf_thres: float = 0.5, iou_thres: float = 0.5):
         """
-        Initializes the RTDETR object with the specified parameters.
+        Initialize the RT-DETR object detection model.
 
         Args:
-            model_path: Path to the ONNX model file.
-            img_path: Path to the input image.
-            conf_thres: Confidence threshold for object detection.
-            iou_thres: IoU threshold for non-maximum suppression
+            model_path (str): Path to the ONNX model file.
+            img_path (str): Path to the input image.
+            conf_thres (float, optional): Confidence threshold for filtering detections.
+            iou_thres (float, optional): IoU threshold for non-maximum suppression.
         """
         self.model_path = model_path
         self.img_path = img_path
@@ -36,23 +70,13 @@ class RTDETR:
         self.input_height = self.model_input[0].shape[3]
 
         # Load class names from the COCO dataset YAML file
-        self.classes = yaml_load(check_yaml("coco8.yaml"))["names"]
+        self.classes = YAML.load(check_yaml("coco8.yaml"))["names"]
 
         # Generate a color palette for drawing bounding boxes
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
-    def draw_detections(self, box, score, class_id):
-        """
-        Draws bounding boxes and labels on the input image based on the detected objects.
-
-        Args:
-            box: Detected bounding box.
-            score: Corresponding detection score.
-            class_id: Class ID for the detected object.
-
-        Returns:
-            None
-        """
+    def draw_detections(self, box: np.ndarray, score: float, class_id: int) -> None:
+        """Draw bounding box and label on the input image for a detected object."""
         # Extract the coordinates of the bounding box
         x1, y1, x2, y2 = box
 
@@ -86,12 +110,15 @@ class RTDETR:
             self.img, label, (int(label_x), int(label_y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA
         )
 
-    def preprocess(self):
+    def preprocess(self) -> np.ndarray:
         """
-        Preprocesses the input image before performing inference.
+        Preprocess the input image for model inference.
+
+        Loads the image, converts color space from BGR to RGB, resizes to model input dimensions, and normalizes
+        pixel values to [0, 1] range.
 
         Returns:
-            image_data: Preprocessed image data ready for inference.
+            (np.ndarray): Preprocessed image data with shape (1, 3, H, W) ready for inference.
         """
         # Read the input image using OpenCV
         self.img = cv2.imread(self.img_path)
@@ -114,20 +141,18 @@ class RTDETR:
         # Expand the dimensions of the image data to match the expected input shape
         image_data = np.expand_dims(image_data, axis=0).astype(np.float32)
 
-        # Return the preprocessed image data
         return image_data
 
-    def bbox_cxcywh_to_xyxy(self, boxes):
+    def bbox_cxcywh_to_xyxy(self, boxes: np.ndarray) -> np.ndarray:
         """
-        Converts bounding boxes from (center x, center y, width, height) format to (x_min, y_min, x_max, y_max) format.
+        Convert bounding boxes from center format to corner format.
 
         Args:
-            boxes (numpy.ndarray): An array of shape (N, 4) where each row represents
-                                a bounding box in (cx, cy, w, h) format.
+            boxes (np.ndarray): Array of shape (N, 4) where each row represents a bounding box in
+                (center_x, center_y, width, height) format.
 
         Returns:
-            numpy.ndarray: An array of shape (N, 4) where each row represents
-                        a bounding box in (x_min, y_min, x_max, y_max) format.
+            (np.ndarray): Array of shape (N, 4) with bounding boxes in (x_min, y_min, x_max, y_max) format.
         """
         # Calculate half width and half height of the bounding boxes
         half_width = boxes[:, 2] / 2
@@ -142,15 +167,18 @@ class RTDETR:
         # Return the bounding boxes in (x_min, y_min, x_max, y_max) format
         return np.column_stack((x_min, y_min, x_max, y_max))
 
-    def postprocess(self, model_output):
+    def postprocess(self, model_output: List[np.ndarray]) -> np.ndarray:
         """
-        Postprocesses the model output to extract detections and draw them on the input image.
+        Postprocess model output to extract and visualize detections.
+
+        Applies confidence thresholding, converts bounding box format, scales coordinates to original image
+        dimensions, and draws detection annotations.
 
         Args:
-            model_output: Output of the model inference.
+            model_output (List[np.ndarray]): Output tensors from the model inference.
 
         Returns:
-            np.array: Annotated image with detections.
+            (np.ndarray): Annotated image with detection bounding boxes and labels.
         """
         # Squeeze the model output to remove unnecessary dimensions
         outputs = np.squeeze(model_output[0])
@@ -178,15 +206,16 @@ class RTDETR:
         for box, score, label in zip(boxes, scores, labels):
             self.draw_detections(box, score, label)
 
-        # Return the annotated image
         return self.img
 
-    def main(self):
+    def main(self) -> np.ndarray:
         """
-        Executes the detection on the input image using the ONNX model.
+        Execute the complete object detection pipeline on the input image.
+
+        Performs preprocessing, ONNX model inference, and postprocessing to generate annotated detection results.
 
         Returns:
-            np.array: Output image with annotations.
+            (np.ndarray): Output image with detection annotations including bounding boxes and class labels.
         """
         # Preprocess the image for model input
         image_data = self.preprocess()
