@@ -19,7 +19,6 @@ from typing import Dict, Type
 
 from ultralytics.engine.model import Model
 from ultralytics.utils.torch_utils import model_info
-
 from .predict import Predictor, SAM2Predictor
 
 

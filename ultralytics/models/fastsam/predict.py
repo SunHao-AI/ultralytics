@@ -7,7 +7,6 @@ from ultralytics.models.yolo.segment import SegmentationPredictor
 from ultralytics.utils import DEFAULT_CFG, checks
 from ultralytics.utils.metrics import box_iou
 from ultralytics.utils.ops import scale_masks
-
 from .utils import adjust_bboxes_to_image_border
 
 

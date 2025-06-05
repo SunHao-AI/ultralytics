@@ -15,7 +15,6 @@ from torch.nn.init import trunc_normal_
 
 from ultralytics.nn.modules import MLP
 from ultralytics.utils import LOGGER
-
 from .blocks import SAM2TwoWayTransformer
 from .decoders import MaskDecoder, SAM2MaskDecoder
 from .encoders import ImageEncoderViT, PromptEncoder

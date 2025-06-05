@@ -9,7 +9,6 @@ from ultralytics.engine.model import Model
 from ultralytics.utils import DEFAULT_CFG_DICT
 from ultralytics.utils.downloads import attempt_download_asset
 from ultralytics.utils.torch_utils import model_info
-
 from .predict import NASPredictor
 from .val import NASValidator
 

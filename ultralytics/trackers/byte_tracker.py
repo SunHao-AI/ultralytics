@@ -4,11 +4,11 @@ from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
-from ..utils import LOGGER
-from ..utils.ops import xywh2ltwh
 from .basetrack import BaseTrack, TrackState
 from .utils import matching
 from .utils.kalman_filter import KalmanFilterXYAH
+from ..utils import LOGGER
+from ..utils.ops import xywh2ltwh
 
 
 class STrack(BaseTrack):

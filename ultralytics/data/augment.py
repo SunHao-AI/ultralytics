@@ -9,14 +9,14 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
-
 from torch.nn import functional as F
+
 from ultralytics.data.utils import polygons2masks, polygons2masks_overlap
 from ultralytics.utils import LOGGER, colorstr
 from ultralytics.utils.checks import check_version
 from ultralytics.utils.instance import Instances
 from ultralytics.utils.metrics import bbox_ioa
-from ultralytics.utils.ops import resample_segments,segment2box, xywh2xyxy, xyxyxyxy2xywhr
+from ultralytics.utils.ops import resample_segments, segment2box, xywh2xyxy, xyxyxyxy2xywhr
 from ultralytics.utils.torch_utils import TORCHVISION_0_10, TORCHVISION_0_11, TORCHVISION_0_13
 
 DEFAULT_MEAN = (0.0, 0.0, 0.0)
@@ -1852,10 +1852,10 @@ class Albumentations:
                 A.MedianBlur(p=0.01),
                 A.ToGray(p=0.01),
                 A.CLAHE(p=0.01),
-                A.RandomBrightnessContrast(p=0.0),
-                A.RandomGamma(p=0.0),
-                A.ImageCompression(quality_range=(75, 100), p=0.0),
-                A.RandomResizedCrop(size=(imgsz, imgsz), scale=(0.1, 1.0), ratio=(3 / 4, 4 / 3), p=1.0),
+                A.RandomBrightnessContrast(p=0.01),
+                A.RandomGamma(p=0.01),
+                A.ImageCompression(quality_range=(75, 100), p=0.01),
+                A.RandomResizedCrop(size=(imgsz, imgsz), scale=(0.1, 1.0), ratio=(3 / 4, 4 / 3), p=0.5),
             ]
 
             # Compose transforms

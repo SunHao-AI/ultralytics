@@ -8,7 +8,6 @@ import torch.nn.functional as F
 
 from ultralytics.utils.loss import FocalLoss, VarifocalLoss
 from ultralytics.utils.metrics import bbox_iou
-
 from .ops import HungarianMatcher
 
 

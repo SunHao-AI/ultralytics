@@ -13,9 +13,8 @@ from ultralytics.models.yolo.detect import DetectionTrainer, DetectionValidator
 from ultralytics.nn.tasks import YOLOEModel
 from ultralytics.utils import DEFAULT_CFG, LOGGER, RANK
 from ultralytics.utils.torch_utils import de_parallel
-
-from ..world.train_world import WorldTrainerFromScratch
 from .val import YOLOEDetectValidator
+from ..world.train_world import WorldTrainerFromScratch
 
 
 class YOLOETrainer(DetectionTrainer):

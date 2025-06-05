@@ -8,7 +8,6 @@ import torch
 
 from ultralytics.utils.ops import xywh2xyxy
 from ultralytics.utils.plotting import save_one_box
-
 from .basetrack import TrackState
 from .byte_tracker import BYTETracker, STrack
 from .utils import matching
