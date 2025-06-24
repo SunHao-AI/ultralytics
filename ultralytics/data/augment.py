@@ -1855,7 +1855,7 @@ class Albumentations:
                 A.RandomBrightnessContrast(p=0.01),
                 A.RandomGamma(p=0.01),
                 A.ImageCompression(quality_range=(75, 100), p=0.01),
-                # A.RandomResizedCrop(size=(imgsz, imgsz), scale=(0.1, 1.0), ratio=(3 / 4, 4 / 3), p=0.5),
+                A.RandomResizedCrop(size=(imgsz, imgsz), scale=(0.1, 1.0), ratio=(3 / 4, 4 / 3), p=0.5),
             ]
 
             # Compose transforms
