@@ -99,8 +99,8 @@ class DFLoss(nn.Module):
         wl = tr - target  # weight left
         wr = 1 - wl  # weight right
         return (
-            F.cross_entropy(pred_dist, tl.view(-1), reduction="none").view(tl.shape) * wl
-            + F.cross_entropy(pred_dist, tr.view(-1), reduction="none").view(tl.shape) * wr
+                F.cross_entropy(pred_dist, tl.view(-1), reduction="none").view(tl.shape) * wl
+                + F.cross_entropy(pred_dist, tr.view(-1), reduction="none").view(tl.shape) * wr
         ).mean(-1, keepdim=True)
 
 
@@ -250,6 +250,19 @@ class v8DetectionLoss:
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
 
+        #########################################################################################################
+        # 忽略特定类别的损失, 针对每张图片, 获取其标注类别, 对其余类别进行mask忽略
+        pred_zeros = torch.full_like(pred_scores, -25)  # BCEWithLogitsLoss中, sigmoid(0) = 0.5, 导致损失计算时值不为0. sigmoid(-25) 约等于 0
+        batch_cls = batch["cls"].to(torch.int64)
+        batch_idx = batch["batch_idx"].to(torch.int64)
+        for idx in batch_idx.unique():
+            mask = batch_idx == idx
+            unique_cls = batch_cls[mask].unique()
+            pred_zeros[idx, :, unique_cls] = pred_scores[idx, :, unique_cls]
+
+        pred_scores = pred_zeros
+        #########################################################################################################
+
         dtype = pred_scores.dtype
         batch_size = pred_scores.shape[0]
         imgsz = torch.tensor(feats[0].shape[2:], device=self.device, dtype=dtype) * self.stride[0]  # image size (h,w)
@@ -318,6 +331,18 @@ class v8SegmentationLoss(v8DetectionLoss):
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
         pred_masks = pred_masks.permute(0, 2, 1).contiguous()
 
+        #########################################################################################################
+        # 忽略特定类别的损失, 针对每张图片, 获取其标注类别, 对其余类别进行mask忽略
+        pred_zeros = torch.full_like(pred_scores, -25)  # BCEWithLogitsLoss中, sigmoid(0) = 0.5, 导致损失计算时值不为0. sigmoid(-25) 约等于 0
+        batch_cls = batch["cls"].to(torch.int64)
+        batch_idx = batch["batch_idx"].to(torch.int64)
+        for idx in batch_idx.unique():
+            mask = batch_idx == idx
+            unique_cls = batch_cls[mask].unique()
+            pred_zeros[idx, :, unique_cls] = pred_scores[idx, :, unique_cls]
+
+        pred_scores = pred_zeros
+        #########################################################################################################
         dtype = pred_scores.dtype
         imgsz = torch.tensor(feats[0].shape[2:], device=self.device, dtype=dtype) * self.stride[0]  # image size (h,w)
         anchor_points, stride_tensor = make_anchors(feats, self.stride, 0.5)
