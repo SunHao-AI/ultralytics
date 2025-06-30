@@ -3,7 +3,7 @@
 import math
 import random
 from copy import deepcopy
-from typing import Sequence, Tuple, Union
+from typing import Tuple, Union
 
 import cv2
 import numpy as np
@@ -2266,7 +2266,7 @@ class Albumentations:
         return False
 
     @staticmethod
-    def xywh_to_yolo(bbox: Union[list, tuple, Sequence], img_width: int, img_height: int) -> tuple:
+    def xywh_to_yolo(bbox: Union[list, tuple], img_width: int, img_height: int) -> tuple:
         """
         Convert xywh to YOLO format, top-left + width-height => center + width-height.
 
