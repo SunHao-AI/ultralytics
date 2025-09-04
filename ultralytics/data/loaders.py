@@ -13,7 +13,7 @@ from typing import Any, List, Optional, Tuple, Union
 import cv2
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image, ImageOps
 
 from ultralytics.data.utils import FORMATS_HELP_MSG, IMG_FORMATS, VID_FORMATS
 from ultralytics.utils import IS_COLAB, IS_KAGGLE, LOGGER, ops
@@ -640,7 +640,17 @@ def autocast_list(source: List[Any]) -> List[Union[Image.Image, np.ndarray]]:
     files = []
     for im in source:
         if isinstance(im, (str, Path)):  # filename or uri
-            files.append(Image.open(urllib.request.urlopen(im) if str(im).startswith("http") else im))
+            # files.append(Image.open(urllib.request.urlopen(im) if str(im).startswith("http") else im))
+            if str(im).startswith("http"):
+                with Image.open(urllib.request.urlretrieve(im)) as img:
+                    img = ImageOps.exif_transpose(img).convert("RGB")  # 恢复正常角
+                    files.append(img.copy())
+            else:
+                with Image.open(im) as img:
+                    filename = getattr(img, "filename", str(im))
+                    img = ImageOps.exif_transpose(img).convert("RGB")  # 恢复正常角
+                    img.filename = filename
+                    files.append(img.copy())
         elif isinstance(im, (Image.Image, np.ndarray)):  # PIL or np Image
             files.append(im)
         else:
