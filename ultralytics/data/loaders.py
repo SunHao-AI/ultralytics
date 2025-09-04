@@ -649,8 +649,9 @@ def autocast_list(source: List[Any]) -> List[Union[Image.Image, np.ndarray]]:
                 with Image.open(im) as img:
                     filename = getattr(img, "filename", str(im))
                     img = ImageOps.exif_transpose(img).convert("RGB")  # 恢复正常角
-                    img.filename = filename
-                    files.append(img.copy())
+                    img_copy = img.copy()
+                    img_copy.filename = filename
+                    files.append()
         elif isinstance(im, (Image.Image, np.ndarray)):  # PIL or np Image
             files.append(im)
         else:
